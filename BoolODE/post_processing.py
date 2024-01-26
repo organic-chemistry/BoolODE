@@ -7,6 +7,34 @@ from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 
+def write_to_file(data,gid,filen,single=True):
+    concat_data = []
+    for k in data.keys():
+        if single:
+            label = np.zeros(len(data[k]))
+            val = eval(k)
+            label += val
+            label=label[:,np.newaxis]
+            lab=["Perturbation"]
+        else :
+            label = np.zeros((len(data[k]),2))
+
+            val = eval(k)
+            label[:,0] += val[0]
+            label[:,1] += val[1]
+            lab=["Perturbation1","Perturbation2"]
+                            
+        concat_data.append(np.concatenate([np.array(data[k])[:,::2],label],axis=1))
+    concat_data = np.concatenate(concat_data,axis=0)
+    pd.DataFrame(concat_data,columns=[f"g{ni}"for ni in gid]+lab).to_csv(filen,index=False)
+
+def plot_avg(avg,name):
+    plt.figure()
+    plt.plot(avg.T)
+    plt.savefig(name)
+    plt.close()
+
+
 def genSamples(opts):
     """
     Generate samples of cells from a given set of simulations. This sample

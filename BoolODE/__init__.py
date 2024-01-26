@@ -12,15 +12,20 @@ from BoolODE import run_experiment as runexp
 from BoolODE import post_processing as po
 
 
+
 class GlobalSettings(object):
     def __init__(self,
                  model_dir, output_dir,
-                 do_simulations, do_post_processing,
-                 modeltype) -> None:
+                do_simulations, do_perturbations,do_double_perturbations, perturbation_level,
+                do_post_processing,
+                modeltype) -> None:
         self.model_dir = model_dir
         self.output_dir = output_dir
         self.do_simulations = do_simulations
         self.do_post_processing = do_post_processing
+        self.do_perturbations = do_perturbations
+        self.do_double_perturbations = do_double_perturbations
+        self.perturbation_level = perturbation_level
         self.modeltype = modeltype
 
 class JobSettings(object):
@@ -118,6 +123,7 @@ class BoolODE(object):
         base_output_dir = self.global_settings.output_dir
 
         alljobs =  self.jobs.keys()
+        feed_back={}
         print('Creating output folders')
         for jobid in alljobs:
             outdir = self.jobs[jobid]['outprefix']
@@ -127,10 +133,34 @@ class BoolODE(object):
         if self.global_settings.do_simulations:
             print('Starting simulations')
             for jobid in alljobs:
-                runexp.startRun(self.jobs[jobid])
+                print("j",self.jobs[jobid]["icsPath"])
+                feed_back[jobid] = runexp.startRun(self.jobs[jobid])
+                os.makedirs(str(self.jobs[jobid]['outprefix'])+"/dynamics/",exist_ok=True)
+                po.plot_avg(feed_back[jobid]["avg_traj"],str(self.jobs[jobid]['outprefix'])+"/dynamics/equilibrium.png")
+
+        if self.global_settings.do_perturbations:
+
+            for jobid in alljobs:
+                print("j",self.jobs[jobid]["icsPath"])
+                results = runexp.startPerturbations(self.jobs[jobid],feed_back[jobid],self.global_settings.perturbation_level)
+                po.write_to_file(results["final_states"],results["gid"],
+                                 filen=str(self.jobs[jobid]['outprefix'])+"/single_perturbation.csv",single=True)
+                for name,avg_traj in results['avg_trajs'].items():
+                    po.plot_avg(avg_traj,name)
+        if self.global_settings.do_double_perturbations:
+
+            for jobid in alljobs:
+                print("j",self.jobs[jobid]["icsPath"])
+                results = runexp.startPerturbations(self.jobs[jobid],feed_back[jobid],self.global_settings.perturbation_level,single=False)
+                po.write_to_file(results["final_states"],results["gid"],
+                                 filen=str(self.jobs[jobid]['outprefix'])+"/double_perturbation.csv",single=False)
+                for name,avg_traj in results['avg_trajs'].items():
+                    po.plot_avg(avg_traj,name)
+        
         if self.global_settings.do_post_processing:
             print('Starting post processing')
             self.do_post_processing()
+
 
     def do_post_processing(self):
         """
@@ -314,6 +344,9 @@ class ConfigParser(object):
                            'output_dir',
                            'do_simulations',
                            'do_post_processing',
+                           'do_perturbations',
+                           'do_double_perturbations',
+                           'perturbation_level',
                            'modeltype']
         print("Global settings:")
         print("----------------")        
@@ -330,10 +363,17 @@ class ConfigParser(object):
         output_dir = input_settings_map['output_dir']
         do_simulations = input_settings_map['do_simulations']
         do_post_processing = input_settings_map['do_post_processing']
+        do_perturbations =  input_settings_map['do_perturbations']
+        do_double_perturbations =  input_settings_map['do_double_perturbations']
+        perturbation_level  =  input_settings_map['perturbation_level']
+
         modeltype = input_settings_map['modeltype']
         return GlobalSettings(model_dir,
                               output_dir,
                               do_simulations,
+                              do_perturbations,
+                              do_double_perturbations,
+                              perturbation_level,
                               do_post_processing,
                               modeltype)
     @staticmethod

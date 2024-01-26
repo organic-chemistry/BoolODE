@@ -12,5 +12,5 @@ proteinDegradation: 1.0
 heavisideSigma: 10.
 
 signalingTimescale: 5.0
-hillCoefficient: 10.
+hillCoefficient: 1.
 interactionStrength: 1.0

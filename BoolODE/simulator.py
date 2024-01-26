@@ -34,6 +34,7 @@ def eulersde(f,G,y0,tspan,pars,seed=0.,dW=None):
     :returns:
         - y: Array containing the time course of state variables 
     """
+    #print(tspan)
     # From sdeint implementation
     N = len(tspan)
     h = (tspan[N-1] - tspan[0])/(N - 1)
@@ -49,6 +50,10 @@ def eulersde(f,G,y0,tspan,pars,seed=0.,dW=None):
     currtime = 0
     n = 0
    
+
+    def format(x):
+        return(" ".join(["%.2f"%xi for xi in x]))
+
     while currtime < maxtime:
         tn = currtime
         yn = y[n]
@@ -60,6 +65,7 @@ def eulersde(f,G,y0,tspan,pars,seed=0.,dW=None):
                 y[n+1][i] = yn[i]
         currtime += h
         n += 1 
+     
     return y
 
 def simulateModel(Model, y0, parameters,isStochastic, tspan,seed):
