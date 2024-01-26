@@ -14,6 +14,7 @@ from optparse import OptionParser
 from itertools import combinations
 from scipy.integrate import odeint
 from sklearn.cluster import KMeans
+import pandas as pd
 import copy
 from importlib.machinery import SourceFileLoader
 import multiprocessing as mp
@@ -21,6 +22,7 @@ import multiprocessing as mp
 from BoolODE import utils
 from BoolODE.model_generator import GenerateModel
 from BoolODE import simulator 
+
 
 np.seterr(all='raise')
 
@@ -58,6 +60,10 @@ def Experiment(mg, Model,
     """
     ####################    
     allParameters = dict(mg.ModelSpec['pars'])
+    outPrefix = str(settings['outprefix'])
+    #print(allParameters)
+    pd.DataFrame({k:[v] for k,v in allParameters.items()}).to_csv(outPrefix+"/parameters.csv")
+
     parNames = sorted(list(allParameters.keys()))
     ## Use default parameters 
     pars = [mg.ModelSpec['pars'][k] for k in parNames]
@@ -411,7 +417,6 @@ def simulateAndSample(argdict):
     if sampleCells:
         header = argdict['header']
         
-    #print(allParameters)
     pars = {}
     for k, v in allParameters.items():
         pars[k] = v
